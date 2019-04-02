@@ -33,23 +33,23 @@ insert into osm.amenity(osm_id, geom)
   WHERE planet_osm_polygon.amenity IS NOT NULL AND (planet_osm_polygon.amenity = ANY (ARRAY['college'::text, 'community_centre'::text, 'courthouse'::text, 'doctors'::text, 'embassy'::text, 'grave_yard'::text, 'hospital'::text, 'library'::text, 'marketplace'::text, 'prison'::text, 'public_building'::text, 'school'::text, 'simming_pool'::text, 'theatre'::text, 'townhall'::text, 'university'::text]));
 --delete from osm.amenity where not st_intersects(st_centroid(geom), (ST_CollectionHomogenize(ST_Collect(ARRAY(select geom from osm.country)))));
 
-drop table if exists osm.boundary;
-create table osm.boundary(
+drop table if exists osm.region;
+create table osm.region(
 	id serial not null primary key,
 	osm_id integer,
 	name text,
 	uppername text,
 	geom geometry(multipolygon, 2193)
 );
-create index gix_boundary on osm.boundary using gist(geom);
-delete from osm.boundary;
-insert into osm.boundary(osm_id, name, uppername, geom) 
+create index gix_region on osm.region using gist(geom);
+delete from osm.region;
+insert into osm.region(osm_id, name, uppername, geom) 
 	SELECT planet_osm_polygon.osm_id,
     planet_osm_polygon.name as name,
     upper(planet_osm_polygon.name) AS uppername,
     st_multi(planet_osm_polygon.way)::geometry(MultiPolygon, 2193) as way
   FROM planet_osm_polygon
-  WHERE planet_osm_polygon.admin_level = '2'::text AND planet_osm_polygon.boundary = 'administrative'::text;
+  WHERE planet_osm_polygon.admin_level = '4'::text AND planet_osm_polygon.boundary = 'administrative'::text;
 
 drop table if exists osm.buildings;
 create table osm.buildings(
@@ -72,25 +72,6 @@ insert into osm.buildings(osm_id, name, housename, housenumber, geom)
     WHERE planet_osm_polygon.building IS NOT NULL AND st_area(planet_osm_polygon.way) < 100000::double precision;
 --delete from osm.buildings where not st_intersects(st_centroid(geom), (ST_CollectionHomogenize(ST_Collect(ARRAY(select geom from osm.country)))));
 
-drop table if exists osm.county;
-create table osm.county(
-	id serial not null primary key,
-	osm_id integer,
-	name text,
-	uppername text,
-	geom geometry(multipolygon, 2193)
-);
-create index gix_county on osm.county using gist(geom);
-delete from osm.county;
-insert into osm.county(osm_id, name, uppername, geom) 
-	SELECT planet_osm_polygon.osm_id, 
-    	planet_osm_polygon.name as name,  
-    	upper(planet_osm_polygon.name) AS uppername,
-    	st_multi(planet_osm_polygon.way)::geometry(MultiPolygon, 2193) as way
-   	FROM planet_osm_polygon
-  	WHERE (planet_osm_polygon.place = 'county'::text OR planet_osm_polygon.admin_level = '6'::text AND planet_osm_polygon.name = 'Budapest'::text) AND planet_osm_polygon.boundary = 'administrative'::text;
-delete from osm.county where not st_intersects(st_centroid(geom), (ST_CollectionHomogenize(ST_Collect(ARRAY(select geom from osm.country)))));
-
 drop table if exists osm.district;
 create table osm.district(
   id serial not null primary key,
@@ -107,7 +88,7 @@ insert into osm.district(osm_id, name, uppername, geom)
     upper(planet_osm_polygon.name) AS uppername,
     st_multi(planet_osm_polygon.way)::geometry(MultiPolygon, 2193) as way
   FROM planet_osm_polygon
-  WHERE planet_osm_polygon.admin_level = '9'::text AND planet_osm_polygon.boundary = 'administrative'::text;
+  WHERE planet_osm_polygon.admin_level = '6'::text AND planet_osm_polygon.boundary = 'administrative'::text;
 delete from osm.district where not st_intersects(st_centroid(geom), (ST_CollectionHomogenize(ST_Collect(ARRAY(select geom from osm.country)))));
 
 drop table if exists osm.forestpark;
@@ -124,7 +105,9 @@ insert into osm.forestpark(osm_id, name, geom)
     planet_osm_polygon.name, 
     st_multi(planet_osm_polygon.way)::geometry(MultiPolygon, 2193) as way
   FROM planet_osm_polygon
-  WHERE (planet_osm_polygon.landuse = ANY (ARRAY['forest'::text, 'orchard'::text, 'park'::text, 'plant_nursery'::text, 'grass'::text, 'greenfield'::text, 'meadow'::text, 'recreation_ground'::text, 'village_green'::text, 'vineyard'::text])) OR (planet_osm_polygon.leisure = ANY (ARRAY['nature_reserve'::text, 'park'::text, 'dog_park'::text, 'garden'::text, 'golf_course'::text, 'horse_riding'::text, 'recreation_ground'::text, 'stadium'::text]));
+  WHERE (planet_osm_polygon.landuse = ANY (ARRAY['forest'::text, 'orchard'::text, 'park'::text, 'plant_nursery'::text, 'grass'::text, 'greenfield'::text, 'meadow'::text, 'recreation_ground'::text, 'village_green'::text, 'vineyard'::text])) 
+  OR (planet_osm_polygon.leisure = ANY (ARRAY['nature_reserve'::text, 'park'::text, 'dog_park'::text, 'garden'::text, 'golf_course'::text, 'horse_riding'::text, 'recreation_ground'::text, 'stadium'::text])) 
+  OR (planet_osm_polygon.boundary = ANY (ARRAY['national_park'::text, 'protected_area'::text]));
 delete from osm.forestpark where not st_intersects(st_centroid(geom), (ST_CollectionHomogenize(ST_Collect(ARRAY(select geom from osm.country)))));
 
 drop table if exists osm.lakes;
