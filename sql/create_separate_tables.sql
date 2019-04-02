@@ -237,25 +237,6 @@ insert into osm.settlements(osm_id, name, uppername, way_area, geom)
   WHERE planet_osm_polygon.admin_level = '8'::text AND planet_osm_polygon.boundary = 'administrative'::text;
 delete from osm.settlements where not st_intersects(st_centroid(geom), (ST_CollectionHomogenize(ST_Collect(ARRAY(select geom from osm.country)))));
 
-drop table if exists osm.subdistrict;
-create table osm.subdistrict(
-  id serial not null primary key,
-  osm_id integer,
-  name text,
-  uppername text,
-  geom geometry(multipolygon, 2193)
-);
-create index gix_subdistrict on osm.subdistrict using gist(geom);
-delete from osm.subdistrict;
-insert into osm.subdistrict(osm_id, name, uppername, geom) 
-  SELECT planet_osm_polygon.osm_id, 
-    planet_osm_polygon.name,  
-    upper(planet_osm_polygon.name) AS uppername,
-    st_multi(planet_osm_polygon.way)::geometry(MultiPolygon, 2193) as way
-  FROM planet_osm_polygon
-  WHERE planet_osm_polygon.admin_level = '10'::text AND planet_osm_polygon.boundary = 'administrative'::text;
-delete from osm.subdistrict where not st_intersects(st_centroid(geom), (ST_CollectionHomogenize(ST_Collect(ARRAY(select geom from osm.country)))));
-
 drop table if exists osm.trunk_primary;
 create table osm.trunk_primary(
   id serial not null primary key,
