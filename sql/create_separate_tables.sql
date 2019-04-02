@@ -96,6 +96,7 @@ create table osm.forestpark(
   id serial not null primary key,
   osm_id integer,
   name text,
+  boundary text,
   geom geometry(multipolygon, 2193)
 );
 create index gix_forestpark on osm.forestpark using gist(geom);
@@ -103,6 +104,7 @@ delete from osm.forestpark;
 insert into osm.forestpark(osm_id, name, geom) 
   SELECT planet_osm_polygon.osm_id, 
     planet_osm_polygon.name, 
+    planet_osm_polygon.boundary, 
     st_multi(planet_osm_polygon.way)::geometry(MultiPolygon, 2193) as way
   FROM planet_osm_polygon
   WHERE (planet_osm_polygon.landuse = ANY (ARRAY['forest'::text, 'orchard'::text, 'park'::text, 'plant_nursery'::text, 'grass'::text, 'greenfield'::text, 'meadow'::text, 'recreation_ground'::text, 'village_green'::text, 'vineyard'::text])) 

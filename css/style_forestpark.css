@@ -10,7 +10,7 @@
   label-offset: 0 5;
 }
 
-[@scale < 5001] {
+[@scale < 5001],[boundary = "national_park"] {
   font-size: 8.5;
   label: [name];
 }
