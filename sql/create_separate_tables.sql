@@ -101,7 +101,7 @@ create table osm.forestpark(
 );
 create index gix_forestpark on osm.forestpark using gist(geom);
 delete from osm.forestpark;
-insert into osm.forestpark(osm_id, name, geom) 
+insert into osm.forestpark(osm_id, name, boundary, geom) 
   SELECT planet_osm_polygon.osm_id, 
     planet_osm_polygon.name, 
     planet_osm_polygon.boundary, 
@@ -219,19 +219,21 @@ insert into osm.roads(osm_id, name, geom)
 drop table if exists osm.settlements;
 create table osm.settlements(
   id serial not null primary key,
-  osm_id integer,
+  osm_id bigint,
   name text,
   uppername text,
   place text,
+  population integer,
   geom geometry(Point, 2193)
 );
 create index gix_settlements on osm.settlements using gist(geom);
 delete from osm.settlements;
-insert into osm.settlements(osm_id, name, uppername, way_area, geom) 
+insert into osm.settlements(osm_id, name, uppername, place, population, geom) 
   SELECT planet_osm_point.osm_id, 
     planet_osm_point.name, 
     upper(planet_osm_point.name) AS uppername,
     planet_osm_point.place AS place,
+    coalesce(planet_osm_point.population::integer, 0) AS population,
     planet_osm_point.way as way
   FROM planet_osm_point
   WHERE planet_osm_point.place = ANY (ARRAY['city'::text, 'town'::text, 'hamlet'::text, 'village'::text, 'suburb'::text]);
