@@ -222,20 +222,20 @@ create table osm.settlements(
   osm_id integer,
   name text,
   uppername text,
-  way_area real,
-  geom geometry(multipolygon, 2193)
+  place text,
+  geom geometry(Point, 2193)
 );
 create index gix_settlements on osm.settlements using gist(geom);
 delete from osm.settlements;
 insert into osm.settlements(osm_id, name, uppername, way_area, geom) 
-  SELECT planet_osm_polygon.osm_id, 
-    planet_osm_polygon.name, 
-    upper(planet_osm_polygon.name) AS uppername,
-    planet_osm_polygon.way_area,
-    st_multi(planet_osm_polygon.way)::geometry(MultiPolygon, 2193) as way
-  FROM planet_osm_polygon
-  WHERE planet_osm_polygon.admin_level = '8'::text AND planet_osm_polygon.boundary = 'administrative'::text;
-delete from osm.settlements where not st_intersects(st_centroid(geom), (ST_CollectionHomogenize(ST_Collect(ARRAY(select geom from osm.country)))));
+  SELECT planet_osm_point.osm_id, 
+    planet_osm_point.name, 
+    upper(planet_osm_point.name) AS uppername,
+    planet_osm_point.place AS place,
+    planet_osm_point.way as way
+  FROM planet_osm_point
+  WHERE planet_osm_point.place = ANY (ARRAY['city'::text, 'town'::text, 'hamlet'::text, 'village'::text, 'suburb'::text]);
+--delete from osm.settlements where not st_intersects(st_centroid(geom), (ST_CollectionHomogenize(ST_Collect(ARRAY(select geom from osm.country)))));
 
 drop table if exists osm.trunk_primary;
 create table osm.trunk_primary(
